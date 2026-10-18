@@ -1,0 +1,25 @@
+{
+  "name": "FlareSolverr",
+  "description": "Proxy server to bypass Cloudflare and DDoS-GUARD protection",
+  "repository": "https://github.com/FlareSolverr/FlareSolverr",
+  "keywords": ["flaresolverr", "cloudflare", "proxy", "jackett"],
+  "stack": "container",
+  "env": {
+    "ACCESS_TOKEN": {
+      "description": "Secret path token to protect your FlareSolverr deployment (e.g. access FlareSolverr at https://yourapp.herokuapp.com/<ACCESS_TOKEN>/)",
+      "generator": "secret"
+    },
+    "MAX_TIMEOUT_MS": {
+      "description": "Maximum timeout in milliseconds for challenge solving requests (defaults to 25000 to fit Heroku's 30s router timeout)",
+      "value": "25000"
+    },
+    "DISABLE_MEDIA": {
+      "description": "Disable loading media (images, fonts, CSS) to save bandwidth and memory",
+      "value": "true"
+    },
+    "LOG_LEVEL": {
+      "description": "Logging level verbosity",
+      "value": "info"
+    }
+  }
+}
