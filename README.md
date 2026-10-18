@@ -11,6 +11,8 @@
 
 FlareSolverr is a proxy server to bypass Cloudflare and DDoS-GUARD protection.
 
+[![Deploy to Heroku](https://www.herokucdn.com/deploy/button.svg)](https://heroku.com/deploy?template=https://github.com/surajgupta00r-max/FlareSolverr/tree/heroku-deployability-16351796723125878482)
+
 ## How it works
 
 FlareSolverr starts a proxy server, and it waits for user requests in an idle state using few resources.
