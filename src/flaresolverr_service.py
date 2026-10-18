@@ -1,4 +1,5 @@
 import logging
+import os
 import platform
 import sys
 import time
@@ -128,6 +129,17 @@ def _controller_v1_handler(req: V1RequestBase) -> V1ResponseBase:
     # set default values
     if req.maxTimeout is None or int(req.maxTimeout) < 1:
         req.maxTimeout = 60000
+
+    # cap maxTimeout if MAX_TIMEOUT_MS env var is set
+    max_timeout_env = os.environ.get('MAX_TIMEOUT_MS', None)
+    if max_timeout_env is not None:
+        try:
+            max_timeout_cap = int(max_timeout_env)
+            if max_timeout_cap > 0 and int(req.maxTimeout) > max_timeout_cap:
+                logging.info(f"Capping req.maxTimeout ({req.maxTimeout} ms) to MAX_TIMEOUT_MS ({max_timeout_cap} ms)")
+                req.maxTimeout = max_timeout_cap
+        except ValueError:
+            pass
 
     # execute the command
     res: V1ResponseBase

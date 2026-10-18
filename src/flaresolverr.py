@@ -27,6 +27,37 @@ class JSONErrorBottle(Bottle):
         return json.dumps(dict(error=res.body, status_code=res.status_code))
 
 
+class AccessTokenMiddleware:
+    """
+    Middleware to protect FlareSolverr with an optional secret path token (ACCESS_TOKEN).
+    When ACCESS_TOKEN is configured, all requests must start with /<ACCESS_TOKEN>/ or /<ACCESS_TOKEN>.
+    """
+    def __init__(self, app):
+        self.app = app
+
+    def __call__(self, environ, start_response):
+        access_token = os.environ.get('ACCESS_TOKEN', '').strip()
+        if not access_token:
+            return self.app(environ, start_response)
+
+        token_prefix = '/' + access_token
+        path = environ.get('PATH_INFO', '')
+
+        if path == token_prefix or path.startswith(token_prefix + '/'):
+            new_path = path[len(token_prefix):]
+            if not new_path:
+                new_path = '/'
+            environ['PATH_INFO'] = new_path
+            environ['SCRIPT_NAME'] = environ.get('SCRIPT_NAME', '') + token_prefix
+            return self.app(environ, start_response)
+        else:
+            status = '404 Not Found'
+            headers = [('Content-Type', 'application/json')]
+            start_response(status, headers)
+            body = json.dumps({"error": "Not Found", "status_code": 404})
+            return [body.encode('utf-8')]
+
+
 app = JSONErrorBottle()
 
 
@@ -150,4 +181,6 @@ if __name__ == "__main__":
         def run(self, handler):
             from waitress import serve
             serve(handler, host=self.host, port=self.port, asyncore_use_poll=True)
-    run(app, host=server_host, port=server_port, quiet=True, server=WaitressServerPoll)
+
+    wsgi_app = AccessTokenMiddleware(app)
+    run(wsgi_app, host=server_host, port=server_port, quiet=True, server=WaitressServerPoll)

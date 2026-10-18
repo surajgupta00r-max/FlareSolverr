@@ -650,6 +650,43 @@ class TestFlareSolverr(unittest.TestCase):
         body = V1ResponseBase(res.json)
         self.assertEqual(STATUS_OK, body.status)
 
+    def test_access_token_middleware(self):
+        import os
+        from flaresolverr import AccessTokenMiddleware, app
+        wrapped_app = TestApp(AccessTokenMiddleware(app))
+
+        os.environ['ACCESS_TOKEN'] = 'secret_token_123'
+        try:
+            # Without token prefix -> 404
+            res = wrapped_app.get('/health', status=404)
+            self.assertEqual(res.status_code, 404)
+            self.assertEqual(res.json['error'], 'Not Found')
+
+            # With token prefix -> 200
+            res = wrapped_app.get('/secret_token_123/health')
+            self.assertEqual(res.status_code, 200)
+            self.assertEqual(res.json['status'], STATUS_OK)
+
+            # Index with token prefix -> 200
+            res = wrapped_app.get('/secret_token_123')
+            self.assertEqual(res.status_code, 200)
+            self.assertEqual(res.json['msg'], 'FlareSolverr is ready!')
+        finally:
+            os.environ.pop('ACCESS_TOKEN', None)
+
+    def test_max_timeout_ms_capping(self):
+        import os
+        from dtos import V1RequestBase
+        import flaresolverr_service
+
+        os.environ['MAX_TIMEOUT_MS'] = '20000'
+        try:
+            req = V1RequestBase({"cmd": "sessions.list", "maxTimeout": 60000})
+            flaresolverr_service.controller_v1_endpoint(req)
+            self.assertEqual(req.maxTimeout, 20000)
+        finally:
+            os.environ.pop('MAX_TIMEOUT_MS', None)
+
 
 if __name__ == '__main__':
     unittest.main()
